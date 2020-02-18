@@ -11,7 +11,9 @@ module aes_sbox #(
   input  logic [7:0]     data_i,
   output logic [7:0]     data_o
 );
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   if (SBoxImpl == "lut") begin : gen_sbox_lut
     aes_sbox_lut aes_sbox (
       .mode_i,
@@ -25,5 +27,7 @@ module aes_sbox #(
       .data_o
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 endmodule

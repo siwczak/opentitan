@@ -21,30 +21,62 @@
   end
 
 virtual task tl_access_unmapped_addr();
+`ifdef _VCP //dzi378
+	addr_range_t temp;
+`endif
   repeat ($urandom_range(10, 100)) begin
+`ifdef _VCP //dzi378
+	foreach (cfg.mem_ranges[i]) temp=cfg.mem_ranges[i];
+`endif
     `create_tl_access_error_case(
         tl_access_unmapped_addr,
         foreach (local::cfg.csr_addrs[i]) {
+`ifdef _VCP //dzi386
+          {tl_seq.addr[TL_AW-1:2], 2'b00} % local::cfg.csr_addr_map_size !=
+`else
           {addr[TL_AW-1:2], 2'b00} % local::cfg.csr_addr_map_size !=
+`endif
               local::cfg.csr_addrs[i] - local::cfg.csr_base_addr;
         }
         foreach (local::cfg.mem_ranges[i]) {
           !(addr % local::cfg.csr_addr_map_size
-              inside {[local::cfg.mem_ranges[i].start_addr : local::cfg.mem_ranges[i].end_addr]});
+`ifdef _VCP //dzi378
+              inside {[local::temp.start_addr : local::temp.end_addr]}
+`else
+              inside {[local::cfg.mem_ranges[i].start_addr : local::cfg.mem_ranges[i].end_addr]}
+`endif
+		  );
         })
   end
 endtask
 
 virtual task tl_write_csr_word_unaligned_addr();
+`ifdef _VCP //dzi378
+	addr_range_t temp;
+`endif
   repeat ($urandom_range(10, 100)) begin
+`ifdef _VCP //dzi378
+	foreach (cfg.mem_ranges[i]) temp=cfg.mem_ranges[i];
+`endif
     `create_tl_access_error_case(
         tl_write_csr_word_unaligned_addr,
         opcode inside {tlul_pkg::PutFullData, tlul_pkg::PutPartialData};
         foreach (local::cfg.mem_ranges[i]) {
           !(addr % local::cfg.csr_addr_map_size
-              inside {[local::cfg.mem_ranges[i].start_addr : local::cfg.mem_ranges[i].end_addr]});
+`ifdef _VCP //dzi378
+              inside {[local::temp.start_addr : local::temp.end_addr]}
+`else
+              inside {[local::cfg.mem_ranges[i].start_addr : local::cfg.mem_ranges[i].end_addr]}
+`endif
+		  );
         }
-        addr[1:0] != 2'b00;)
+`ifdef _VCP //dzi386
+        tl_seq.addr[1:0] != 2'b00;
+`else
+	addr[1:0] != 2'b00;
+`endif
+)
+
   end
 endtask
 
@@ -65,6 +97,15 @@ virtual task tl_write_less_than_csr_width();
         // constrain enabled bytes less than reg width
         if (msb_pos >= 24) {
           &mask == 0;
+`ifdef _VCP//dzi386
+        } else if (msb_pos >= 16) {
+          &tl_seq.mask[2:0] == 0;
+        } else if (msb_pos >= 8) {
+          &tl_seq.mask[1:0] == 0;
+        } else { // msb_pos <= 7
+          tl_seq.mask[0] == 0;
+        })
+`else
         } else if (msb_pos >= 16) {
           &mask[2:0] == 0;
         } else if (msb_pos >= 8) {
@@ -72,6 +113,7 @@ virtual task tl_write_less_than_csr_width();
         } else { // msb_pos <= 7
           mask[0] == 0;
         })
+`endif
   end
 endtask
 
@@ -83,17 +125,31 @@ virtual task tl_protocol_err();
   end
 endtask
 
-virtual task tl_write_mem_less_than_word();
+task tl_write_mem_less_than_word();
+`ifdef _VCP //dzi378
+		addr_range_t temp;
+`endif
   uint mem_idx;
   repeat ($urandom_range(10, 100)) begin
     // if more than one memories, randomly select one memory
     mem_idx = $urandom_range(0, cfg.mem_ranges.size - 1);
+`ifdef _VCP //dzi378
+		temp=cfg.mem_ranges[mem_idx];
+`endif
     `create_tl_access_error_case(
         tl_write_mem_less_than_word,
         opcode inside {tlul_pkg::PutFullData, tlul_pkg::PutPartialData};
-        addr[1:0] == 0; // word aligned
+`ifdef _VCP//dzi386        
+	tl_seq.addr[1:0] == 0; // word aligned
+`else
+	addr[1:0] == 0; // word aligned
+`endif
         addr inside
-            {[local::cfg.mem_ranges[mem_idx].start_addr : local::cfg.mem_ranges[mem_idx].end_addr]};
+`ifdef _VCP //dzi378
+        {[local::temp.start_addr : local::temp.end_addr]};
+`else
+	{[local::cfg.mem_ranges[mem_idx].start_addr : local::cfg.mem_ranges[mem_idx].end_addr]};
+`endif
         mask != '1 || size < 2;
         )
   end
@@ -101,22 +157,32 @@ endtask
 
 virtual task tl_read_mem_err();
   uint mem_idx;
+`ifdef _VCP //dzi378
+	addr_range_t temp;
+`endif
   repeat ($urandom_range(10, 100)) begin
     // if more than one memories, randomly select one memory
     mem_idx = $urandom_range(0, cfg.mem_ranges.size - 1);
+`ifdef _VCP //dzi378
+	temp=cfg.mem_ranges[mem_idx];
+`endif
     `create_tl_access_error_case(
         tl_read_mem_err,
         opcode == tlul_pkg::Get;
         addr inside
+`ifdef _VCP //dzi378
+            {[local::temp.start_addr : local::temp.end_addr]};
+`else
             {[local::cfg.mem_ranges[mem_idx].start_addr : local::cfg.mem_ranges[mem_idx].end_addr]};
+`endif
         )
   end
 endtask
 
-// generic task to check interrupt test reg functionality
+// generic task to check interrupt temp reg functionality
 virtual task run_tl_errors_vseq(int num_times = 1, bit do_wait_clk = 0);
-  bit test_mem_err_byte_write = (cfg.mem_ranges.size > 0) && !cfg.en_mem_byte_write;
-  bit test_mem_err_read       = (cfg.mem_ranges.size > 0) && !cfg.en_mem_read;
+  bit temp_mem_err_byte_write = (cfg.mem_ranges.size > 0) && !cfg.en_mem_byte_write;
+  bit temp_mem_err_read       = (cfg.mem_ranges.size > 0) && !cfg.en_mem_read;
   cfg.tlul_assert_ctrl_vif.drive(1'b0);
 
   for (int trans = 1; trans <= num_times; trans++) begin
@@ -133,8 +199,8 @@ virtual task run_tl_errors_vseq(int num_times = 1, bit do_wait_clk = 0);
           1: tl_write_less_than_csr_width();
           1: tl_protocol_err();
           // only run this task when the mem supports error response
-          test_mem_err_byte_write: tl_write_mem_less_than_word();
-          test_mem_err_read:       tl_read_mem_err();
+          temp_mem_err_byte_write: tl_write_mem_less_than_word();
+          temp_mem_err_read:       tl_read_mem_err();
         endcase
       end
     join_none

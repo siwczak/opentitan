@@ -165,19 +165,28 @@ module tlul_adapter_sram #(
   assign wr_attr_error = (tl_i.a_opcode == PutFullData || tl_i.a_opcode == PutPartialData) ?
                          (ByteAccess == 0) ? (tl_i.a_mask != '1 || tl_i.a_size != 2'h2) : 1'b0 :
                          1'b0;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   if (ErrOnWrite == 1) begin : gen_no_writes
     assign wr_vld_error = tl_i.a_opcode != Get;
   end else begin : gen_writes_allowed
     assign wr_vld_error = 1'b0;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
+`ifdef _VCP //LPA1866
+generate
+`endif
   if (ErrOnRead == 1) begin: gen_no_reads
     assign rd_vld_error = tl_i.a_opcode == Get;
   end else begin : gen_reads_allowed
     assign rd_vld_error = 1'b0;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   tlul_err u_err (
     .clk_i,
     .rst_ni,

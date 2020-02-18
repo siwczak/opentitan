@@ -101,20 +101,30 @@ module alert_handler_reg_wrap import alert_pkg::*; (
 
   // if an alert is enabled and it fires,
   // we have to set the corresponding cause bit
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < NAlerts; k++) begin : gen_alert_cause
     assign hw2reg.alert_cause[k].d  = 1'b1;
     assign hw2reg.alert_cause[k].de = reg2hw.alert_cause[k].q |
                                       hw2reg_wrap.alert_cause[k];
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // if a local alert is enabled and it fires,
   // we have to set the corresponding cause bit
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < N_LOC_ALERT; k++) begin : gen_loc_alert_cause
     assign hw2reg.loc_alert_cause[k].d  = 1'b1;
     assign hw2reg.loc_alert_cause[k].de = reg2hw.loc_alert_cause[k].q |
                                           hw2reg_wrap.loc_alert_cause[k];
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // ping timeout in cycles
   // autolock can clear these regs automatically upon entering escalation
   // note: the class must be activated for this to occur
@@ -154,19 +164,29 @@ module alert_handler_reg_wrap import alert_pkg::*; (
 
   // config register lock
   assign reg2hw_wrap.config_locked = ~reg2hw.regen.q;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // alert enable and class assignments
   for (genvar k = 0; k < NAlerts; k++) begin : gen_alert_en_class
     assign reg2hw_wrap.alert_en[k]    = reg2hw.alert_en[k].q;
     assign reg2hw_wrap.alert_class[k] = reg2hw.alert_class[k].q;
   end
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 
+`ifdef _VCP //LPA1866
+generate
+`endif
   // local alert enable and class assignments
   for (genvar k = 0; k < N_LOC_ALERT; k++) begin : gen_loc_alert_en_class
     assign reg2hw_wrap.loc_alert_en[k]    = reg2hw.loc_alert_en[k].q;
     assign reg2hw_wrap.loc_alert_class[k] = reg2hw.loc_alert_class[k].q;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   assign reg2hw_wrap.ping_timeout_cyc = reg2hw.ping_timeout_cyc.q;
 
   // class enable
@@ -269,15 +289,25 @@ module alert_handler_reg_wrap import alert_pkg::*; (
   //////////////////////
 
   // alert cause output
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < NAlerts; k++) begin : gen_alert_cause_dump
     assign crashdump_o.alert_cause[k]  = reg2hw.alert_cause[k].q;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // local alert cause register output
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < N_LOC_ALERT; k++) begin : gen_loc_alert_cause_dump
     assign crashdump_o.loc_alert_cause[k]  = reg2hw.loc_alert_cause[k].q;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   assign crashdump_o.class_accum_cnt = hw2reg_wrap.class_accum_cnt;
   assign crashdump_o.class_esc_cnt   = hw2reg_wrap.class_esc_cnt;
   assign crashdump_o.class_esc_state = hw2reg_wrap.class_esc_state;

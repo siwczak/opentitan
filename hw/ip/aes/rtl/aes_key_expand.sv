@@ -163,7 +163,9 @@ module aes_key_expand #(
 
   // Mux input for SubWord
   assign sub_word_in = use_rot_word ? rot_word_out : rot_word_in;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // SubWord - individually substitute bytes
   for (genvar i = 0; i < 4; i++) begin : gen_sbox
     aes_sbox #(
@@ -174,7 +176,9 @@ module aes_key_expand #(
       .data_o ( sub_word_out[8*i +: 8] )
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // Add Rcon
   assign rcon_add_in  = sub_word_out[7:0];
   assign rcon_add_out = rcon_add_in ^ rcon_q;

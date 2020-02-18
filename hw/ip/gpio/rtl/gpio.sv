@@ -30,7 +30,9 @@ module gpio (
   // possibly filter the input based upon register configuration
 
   logic [31:0] data_in_d;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar i = 0 ; i < 32 ; i++) begin : gen_filter
     prim_filter_ctr #(.Cycles(16)) filter (
       .clk_i,
@@ -40,7 +42,9 @@ module gpio (
       .filter_o(data_in_d[i])
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // GPIO_IN
   assign hw2reg.data_in.de = 1'b1;
   assign hw2reg.data_in.d  = data_in_d;

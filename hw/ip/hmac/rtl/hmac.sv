@@ -125,13 +125,17 @@ module hmac
       end
     end
   end
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar i = 0; i < 8; i++) begin : gen_key_digest
     assign hw2reg.key[7-i].d      = '0;
     // digest
     assign hw2reg.digest[i].d = conv_endian(digest[i], digest_swap);
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   logic [3:0] unused_cfg_qe;
 
   assign unused_cfg_qe = {cfg_reg.sha_en.qe,      cfg_reg.hmac_en.qe,
@@ -239,8 +243,15 @@ module hmac
   assign fifo_full   = ~fifo_wready;
   assign fifo_empty  = ~fifo_rvalid;
   assign fifo_wvalid = (hmac_fifo_wsel && fifo_wready) ? hmac_fifo_wvalid : reg_fifo_wvalid;
+`ifdef _VCP //DZI375
+	always_comb begin
+		if (hmac_fifo_wsel)	fifo_wdata='{data: digest[hmac_fifo_wdata_sel], mask: '1};
+		else fifo_wdata=reg_fifo_wentry;
+	end
+`else
   assign fifo_wdata  = (hmac_fifo_wsel) ? '{data: digest[hmac_fifo_wdata_sel], mask: '1}
                                        : reg_fifo_wentry;
+`endif
 
   prim_fifo_sync #(
     .Width ($bits(sha_fifo_t)),
@@ -474,7 +485,9 @@ module hmac
   // TODO: add CSR with REGWEN to test alert via SW
   logic [NumAlerts-1:0] alerts;
   assign alerts = {msg_push_sha_disabled};
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar j = 0; j < hmac_pkg::NumAlerts; j++) begin : gen_alert_tx
     prim_alert_sender #(
       .AsyncOn(hmac_pkg::AlertAsyncOn[j])
@@ -486,7 +499,9 @@ module hmac
       .alert_tx_o ( alert_tx_o[j] )
     );
   end : gen_alert_tx
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   //////////////////////////////////////////////
   // Assertions, Assumptions, and Coverpoints //
   //////////////////////////////////////////////
@@ -498,11 +513,15 @@ module hmac
       @(posedge clk) disable iff (rst_n == 0)
         msg_fifo_req & msg_fifo_we |-> wmask_byte inside {'0, '1};
     endproperty
-
+`ifdef _VCP //LPA1866
+generate
+`endif
     for (genvar i = 0 ; i < 4; i++) begin: gen_assert_wmask_bytealign
       assert property (wmask_bytealign_p(msg_fifo_wmask[8*i+:8], clk_i, rst_ni));
     end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // To pass FPV, this shouldn't add pragma translate_off even these two signals
   // are used in Assertion only
   logic in_process;

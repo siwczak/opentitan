@@ -98,10 +98,15 @@ module rv_dm #(
     datasize:   dm::DataCount,
     dataaddr:   dm::DataAddr
   };
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar i = 0; i < NrHarts; i++) begin : gen_dm_hart_ctrl
     assign hartinfo[i] = DebugHartInfo;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   dm_csrs #(
     .NrHarts(NrHarts),
     .BusWidth(BusWidth),

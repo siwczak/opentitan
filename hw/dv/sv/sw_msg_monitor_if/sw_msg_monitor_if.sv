@@ -41,7 +41,11 @@
 
 interface sw_msg_monitor_if #(
   // width of the data bus
+  `ifdef _VCP //DZI383
+  parameter DATA_WIDTH = 32
+  `else
   parameter int unsigned DATA_WIDTH = 32
+  `endif
 ) (
   input logic                   clk,        // clock
   input logic                   rst_n,      // active low reset

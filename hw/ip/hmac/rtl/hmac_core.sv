@@ -111,12 +111,31 @@ module hmac_core import hmac_pkg::*; (
   assign fifo_rready  = (hmac_en) ? (st_q == StMsg) & sha_rready : sha_rready ;
   // sha_rvalid is controlled by State Machine below.
   assign sha_rvalid = (!hmac_en) ? fifo_rvalid : hmac_sha_rvalid ;
-  assign sha_rdata =
+`ifdef _VCP // DZI375
+always_comb begin	
+	if (!hmac_en) begin
+		sha_rdata=fifo_rdata;
+	end
+	else if(sel_rdata == SelIPad ) begin
+		sha_rdata='{data: i_pad[(BlockSize-1)-32*pad_index-:32], mask: '1};
+	end
+	else if(sel_rdata == SelOPad) begin
+		sha_rdata='{data: o_pad[(BlockSize-1)-32*pad_index-:32], mask: '1};
+	end
+	else if(sel_rdata == SelFifo) begin
+		sha_rdata=fifo_rdata;
+	end
+	else sha_rdata='0;
+	
+end
+`else
+ assign sha_rdata =
     (!hmac_en)             ? fifo_rdata                                               :
     (sel_rdata == SelIPad) ? '{data: i_pad[(BlockSize-1)-32*pad_index-:32], mask: '1} :
     (sel_rdata == SelOPad) ? '{data: o_pad[(BlockSize-1)-32*pad_index-:32], mask: '1} :
     (sel_rdata == SelFifo) ? fifo_rdata                                               :
     '{default: '0};
+`endif
 
   assign sha_message_length = (!hmac_en)                 ? message_length             :
                               (sel_msglen == SelIPadMsg) ? message_length + BlockSize :

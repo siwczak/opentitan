@@ -85,7 +85,7 @@ class chip_base_vseq extends dv_base_vseq #(
   virtual task monitor_cpu_state();
     fork
       forever begin
-        `uvm_info(`gfn, $sformatf("cpu_test_state = %0s", cpu_test_state), UVM_LOW)
+        `uvm_info(`gfn, $sformatf("cpu_test_state = %0s", cpu_test_state.name), UVM_LOW)
         case (cpu_test_state)
           CpuUnderReset: begin
             wait(cpu_test_state == CpuTestRunning);

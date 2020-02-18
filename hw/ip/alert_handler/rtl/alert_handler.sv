@@ -95,6 +95,9 @@ module alert_handler import alert_pkg::*; import prim_pkg::*; (
   logic [NAlerts-1:0] alert_trig;
 
   // Target interrupt notification
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0 ; k < NAlerts ; k++) begin : gen_alerts
     prim_alert_receiver #(
       .AsyncOn(AsyncOn[k])
@@ -109,7 +112,9 @@ module alert_handler import alert_pkg::*; import prim_pkg::*; (
       .alert_tx_i   ( alert_tx_i[k]      )
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   assign loc_alert_trig[2] = |(reg2hw_wrap.alert_en & alert_integfail);
 
   ///////////////////////////////////////
@@ -134,7 +139,9 @@ module alert_handler import alert_pkg::*; import prim_pkg::*; (
 
   logic [N_CLASSES-1:0] class_accum_trig;
   logic [N_CLASSES-1:0][N_ESC_SEV-1:0] class_esc_sig_en;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < N_CLASSES; k++) begin : gen_classes
     alert_handler_accu i_accu (
       .clk_i,
@@ -166,7 +173,9 @@ module alert_handler import alert_pkg::*; import prim_pkg::*; (
       .esc_sig_en_o     ( class_esc_sig_en[k]              )
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   ////////////////////////
   // Escalation Senders //
   ////////////////////////
@@ -174,7 +183,9 @@ module alert_handler import alert_pkg::*; import prim_pkg::*; (
   logic [N_ESC_SEV-1:0] esc_sig_en;
   logic [N_ESC_SEV-1:0] esc_integfail;
   logic [N_ESC_SEV-1:0][N_CLASSES-1:0] esc_sig_en_trsp;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < N_ESC_SEV; k++) begin : gen_esc_sev
     for (genvar j = 0; j < N_CLASSES; j++) begin : gen_transp
       assign esc_sig_en_trsp[k][j] = class_esc_sig_en[j][k];
@@ -193,7 +204,9 @@ module alert_handler import alert_pkg::*; import prim_pkg::*; (
       .esc_tx_o     ( esc_tx_o[k]      )
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   assign loc_alert_trig[3] = |esc_integfail;
 
   ////////////////

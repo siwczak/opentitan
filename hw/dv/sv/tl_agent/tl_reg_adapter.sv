@@ -28,15 +28,28 @@ class tl_reg_adapter #(type ITEM_T = tl_seq_item) extends uvm_reg_adapter;
     if (rw.kind == UVM_READ) begin
       if (rw.byte_en == '1) begin // csr full read
         `DV_CHECK_RANDOMIZE_WITH_FATAL(reg_item,
-            a_opcode          == tlul_pkg::Get;
+		`ifdef _VCP// dzi386
+            reg_item.a_opcode          == tlul_pkg::Get;
+            reg_item.a_addr[TL_AW-1:2] == rw.addr[TL_AW-1:2];
+			$countones(reg_item.a_mask) dist { TL_DBW       :/ 1,
+                                      [0:TL_DBW-1] :/ 1};)
+		`else
+			a_opcode          == tlul_pkg::Get;
             a_addr[TL_AW-1:2] == rw.addr[TL_AW-1:2];
             $countones(a_mask) dist { TL_DBW       :/ 1,
                                       [0:TL_DBW-1] :/ 1};)
+		`endif
       end else begin // csr field read
         `DV_CHECK_RANDOMIZE_WITH_FATAL(reg_item,
-            a_opcode          == tlul_pkg::Get;
+		`ifdef _VCP// dzi386
+            reg_item.a_opcode          == tlul_pkg::Get;
+            reg_item.a_addr[TL_AW-1:2] == rw.addr[TL_AW-1:2];
+            reg_item.a_mask            == rw.byte_en;)
+		`else
+		    a_opcode          == tlul_pkg::Get;
             a_addr[TL_AW-1:2] == rw.addr[TL_AW-1:2];
             a_mask            == rw.byte_en;)
+		`endif
       end
     end else begin // randomize CSR partial or full write
       // Actual width of the CSR may be < TL_DW bits depending on fields and their widths
@@ -56,11 +69,19 @@ class tl_reg_adapter #(type ITEM_T = tl_seq_item) extends uvm_reg_adapter;
         `uvm_fatal(`gfn, $sformatf("unexpected address 0x%0h", rw.addr))
       end
       `DV_CHECK_RANDOMIZE_WITH_FATAL(reg_item,
-          a_opcode inside {PutFullData, PutPartialData};
+	  `ifdef _VCP// dzi386
+          reg_item.a_opcode inside {PutFullData, PutPartialData};
+          reg_item.a_addr    == rw.addr;
+          reg_item.a_data    == rw.data;
+          reg_item.a_mask[0] == 1;
+          $countones(reg_item.a_mask) > (msb / 8);)
+	   `else
+	      a_opcode inside {PutFullData, PutPartialData};
           a_addr    == rw.addr;
           a_data    == rw.data;
           a_mask[0] == 1;
           $countones(a_mask) > (msb / 8);)
+	`endif
     end
     `uvm_info(`gtn, $sformatf("tl reg req item: addr=0x%0h, op=%0s data=0x%0h, mask = %0h",
                               reg_item.a_addr, rw.kind.name, reg_item.a_data,

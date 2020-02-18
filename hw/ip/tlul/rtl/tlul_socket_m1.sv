@@ -82,7 +82,9 @@ module tlul_socket_m1 #(
   logic arb_valid;
   logic arb_ready;
   tlul_pkg::tl_h2d_t arb_data;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // Host Req/Rsp FIFO
   for (genvar i = 0 ; i < M ; i++) begin : gen_host_fifo
     tlul_pkg::tl_h2d_t hreq_fifo_i;
@@ -135,7 +137,9 @@ module tlul_socket_m1 #(
       .spare_rsp_o ()
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // Device Req/Rsp FIFO
   tlul_fifo_sync #(
     .ReqPass    (DReqPass),
@@ -155,14 +159,20 @@ module tlul_socket_m1 #(
     .spare_rsp_i (1'b0),
     .spare_rsp_o ()
   );
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // Request Arbiter
   for (genvar i = 0 ; i < M ; i++) begin : gen_arbreqgnt
     assign hrequest[i] = hreq_fifo_o[i].a_valid;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   assign arb_ready = drsp_fifo_o.a_ready;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   if (tlul_pkg::ArbiterImpl == "PPC") begin : gen_arb_ppc
     prim_arbiter_ppc #(
       .N      (M),
@@ -196,7 +206,9 @@ module tlul_socket_m1 #(
   end else begin : gen_unknown
     `ASSERT_INIT(UnknownArbImpl_A, 0)
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   logic [  M-1:0] hfifo_rspvalid;
   logic [  M-1:0] dfifo_rspready;
   logic [IDW-1:0] hfifo_rspid;
@@ -228,6 +240,9 @@ module tlul_socket_m1 #(
     {STIDW{1'b0}},
     drsp_fifo_o.d_source[IDW-1:STIDW]
   };
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar i = 0 ; i < M ; i++) begin : gen_idrouting
     assign hfifo_rspvalid[i] = drsp_fifo_o.d_valid &
                                (drsp_fifo_o.d_source[0+:STIDW] == i);
@@ -248,7 +263,9 @@ module tlul_socket_m1 #(
       a_ready:  hgrant[i]
     };
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // this assertion fails when rspid[0+:STIDW] not in [0..M-1]
   `ASSERT(rspIdInRange, drsp_fifo_o.d_valid |->
       drsp_fifo_o.d_source[0+:STIDW] >= 0 && drsp_fifo_o.d_source[0+:STIDW] < M, clk_i, !rst_ni)

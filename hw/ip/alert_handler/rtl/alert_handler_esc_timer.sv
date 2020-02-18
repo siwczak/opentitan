@@ -186,13 +186,18 @@ module alert_handler_esc_timer import alert_pkg::*; (
   end
 
   logic [N_ESC_SEV-1:0][N_PHASES-1:0] esc_map_oh;
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < N_ESC_SEV; k++) begin : gen_phase_map
     // generate configuration mask for escalation enable signals
     assign esc_map_oh[k] = N_ESC_SEV'(esc_en_i[k]) << esc_map_i[k];
     // mask reduce current phase state vector
     assign esc_sig_en_o[k] = |(esc_map_oh[k] & phase_oh);
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   ///////////////
   // Registers //
   ///////////////

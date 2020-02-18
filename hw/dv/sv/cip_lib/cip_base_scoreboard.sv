@@ -68,12 +68,22 @@ class cip_base_scoreboard #(type RAL_T = dv_base_reg_block,
   // check if it's mem addr
   virtual function bit is_mem_addr(tl_seq_item item);
     uvm_reg_addr_t addr = get_normalized_addr(item.a_addr) - cfg.csr_base_addr;
-    foreach (cfg.mem_ranges[i]) begin
-      if (addr inside {[cfg.mem_ranges[i].start_addr : cfg.mem_ranges[i].end_addr]}) begin
-        return 1;
-      end
-    end
-  endfunction
+	`ifdef _VCP//DZI378
+		CFG_T cfg;
+		cfg=super.cfg;
+	`endif
+		foreach (cfg.mem_ranges[i]) begin
+		`ifdef _VCP//DZI378
+			addr_range_t temp;
+			temp=cfg.mem_ranges[i];
+			if (addr inside {[temp.start_addr : temp.end_addr]}) begin
+		`else
+			if (addr inside {[cfg.mem_ranges[i].start_addr : cfg.mem_ranges[i].end_addr]}) begin
+		`endif
+				return 1;
+			end
+		end
+	endfunction
 
   // check if there is any tl error, return 1 in case of error or if it is an unmapped addr
   // if it is data channel, will check if d_error is set correctly

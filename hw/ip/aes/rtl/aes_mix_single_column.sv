@@ -30,21 +30,29 @@ module aes_mix_single_column (
   assign x[1] = data_i[3] ^ data_i[2];
   assign x[2] = data_i[2] ^ data_i[1];
   assign x[3] = data_i[1] ^ data_i[0];
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // Mul2(x)
   for (genvar i = 0; i < 4; i++) begin : gen_x_mul2
     assign x_mul2[i] = aes_mul2(x[i]);
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // Drive y_pre_mul4
   assign y_pre_mul4[0] = data_i[3] ^ data_i[1];
   assign y_pre_mul4[1] = data_i[2] ^ data_i[0];
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // Mul4(y_pre_mul4)
   for (genvar i = 0; i < 2; i++) begin : gen_mul4
     assign y[i] = aes_mul4(y_pre_mul4[i]);
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // Drive y2_pre_mul2
   assign y2_pre_mul2 = y[0] ^ y[1];
 

@@ -102,6 +102,9 @@ module nmi_gen import prim_pkg::*; #(
   /////////////////////////////////////////
   // Connect escalation signal receivers //
   /////////////////////////////////////////
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < N_ESC_SEV; k++) begin : gen_esc_sev
     prim_esc_receiver i_prim_esc_receiver (
       .clk_i,
@@ -111,5 +114,7 @@ module nmi_gen import prim_pkg::*; #(
       .esc_tx_i ( esc_tx_i[k] )
     );
   end : gen_esc_sev
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 endmodule : nmi_gen

@@ -168,15 +168,24 @@ interface clk_rst_if #(
   // 3 - clk gated when reset asserted
   // Note: for power on reset, please ensure pre_reset_dly_clks is set to 0
   task automatic apply_reset(int pre_reset_dly_clks  = 0,
-                             int reset_width_clks    = $urandom_range(4, 20),
+  							`ifdef _VCP //dzi385
+                             integer reset_width_clks    = 32'bx,
+							 `else
+							 int reset_width_clks    = $urandom_range(4, 20);
+							 `endif
                              int post_reset_dly_clks = 0,
                              int rst_n_scheme        = 1);
     int dly_ps;
+	`ifdef _VCP //dzi385
+	if ($isunknown(reset_width_clks))
+	reset_width_clks    = $urandom_range(4, 20);
+	`endif
     dly_ps = $urandom_range(0, clk_period_ps);
     wait_clks(pre_reset_dly_clks);
     case (rst_n_scheme)
       0: begin : sync_assert_deassert
         o_rst_n <= 1'b0;
+		$display(reset_width_clks);
         wait_clks(reset_width_clks);
         o_rst_n <= 1'b1;
       end

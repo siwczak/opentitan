@@ -22,8 +22,14 @@ module prim_rom #(
   output logic                 dvalid_o
 );
 
+`ifdef _VCP //dzi380
+mem_bkdr_if rom_mem_bkdr_if();
+`endif
   import prim_pkg::*;
 
+`ifdef _VCP //LPA1866
+generate
+`endif
   if (Impl == ImplGeneric) begin: gen_mem_generic
     prim_generic_rom #(
       .Width(Width),
@@ -50,5 +56,7 @@ module prim_rom #(
   end else begin : gen_rom_unsupported_impl
     // TODO: Find code that works across tools and causes a compile failure
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 endmodule

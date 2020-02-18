@@ -52,12 +52,15 @@
     else `ASSERT_RPT(`PRIM_STRINGIFY(__name), `PRIM_STRINGIFY(__prop)) \
 `endif
 
-// Assertion in initial block. Can be used for things like parameter checking.
+// Assertion in initial block. Can be used for things like parameter checking. dzi387 dzi388
 `define ASSERT_INIT(__name, __prop)                                      \
 `ifdef INC_ASSERT                                                        \
+`ifdef _VCP \
+`else \
   initial                                                                \
     __name: assert (__prop)                                              \
       else `ASSERT_RPT(`PRIM_STRINGIFY(__name), `PRIM_STRINGIFY(__prop)) \
+`endif \
 `endif
 
 // Assertion in final block. Can be used for things like queues being empty

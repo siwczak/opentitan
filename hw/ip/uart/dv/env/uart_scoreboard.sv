@@ -58,6 +58,9 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
   endtask
 
   virtual task process_uart_tx_fifo();
+  `ifdef _VCP //dzi382
+  int size_tx;
+  `endif
     uart_item act_item, exp_item;
     forever begin
       uart_tx_fifo.get(act_item);
@@ -70,8 +73,12 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
       `uvm_info(`gfn, $sformatf("After drop one item, new tx_q size: %0d", tx_q.size), UVM_HIGH)
       compare(act_item, exp_item, "TX");
       // after an item is sent, check to see if size dipped below watermark
-      predict_tx_watermark_intr();
-
+	  `ifdef _VCP //DZI382
+	   size_tx=tx_q.size;
+      predict_tx_watermark_intr(size_tx);
+	  `else
+	  predict_tx_watermark_intr();
+	  `endif
       if (tx_q.size() == 0 && tx_processing_item_q.size() == 0) begin
         intr_exp[TxEmpty] = 1;
         process_objections(1'b0);
@@ -80,6 +87,9 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
   endtask
 
   virtual task process_uart_rx_fifo();
+  `ifdef _VCP //DZI382
+  int size_rx;
+  `endif
     uart_item item;
     forever begin
       uart_rx_fifo.get(item);
@@ -102,7 +112,12 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
         if (!parity_err && item.stop_bit == 1) begin // no parity/frame error
           if (rx_q.size < UART_FIFO_DEPTH) begin
             rx_q.push_back(item);
+			`ifdef _VCP //dzi382
+			size_rx=rx_q.size;
+            predict_rx_watermark_intr(size_rx);
+			`else
             predict_rx_watermark_intr();
+			`endif
           end
           else begin
             intr_exp[RxOverflow] = 1;
@@ -112,8 +127,8 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
         end // no parity/frame error
       end // if (rx_enabled)
     end // forever
+	
   endtask
-
   virtual function void predict_tx_watermark_intr(uint tx_q_size = tx_q.size, bit just_cleared = 0);
     uint watermark = get_watermark_bytes_by_level(ral.fifo_ctrl.txilvl.get_mirrored_value());
     intr_exp[TxWatermark] |= (tx_q_size < watermark);
@@ -135,6 +150,9 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
   endfunction
 
   virtual task process_tl_access(tl_seq_item item, tl_channels_e channel = DataChannel);
+  `ifdef _VCP //dzi382
+  int size_rx;
+  `endif
     uvm_reg csr;
     bit     do_read_check   = 1'b1;
     bit     write           = item.is_write();
@@ -198,13 +216,18 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
           fork begin
             uint latch_tx_q_size = tx_q.size();
             cfg.clk_rst_vif.wait_n_clks(3); // use negedge to avoid race condition
-            predict_tx_watermark_intr(latch_tx_q_size);
+          predict_tx_watermark_intr(latch_tx_q_size);
             if (ral.ctrl.slpbk.get_mirrored_value()) begin
               // if sys loopback is on, tx item isn't sent to uart pin but rx fifo
               uart_item tx_item = tx_q.pop_front();
               if (rx_enabled && (rx_q.size < UART_FIFO_DEPTH)) begin
                 rx_q.push_back(tx_item);
+				`ifdef _VCP //dzi382
+				size_rx=rx_q.size;
+                predict_rx_watermark_intr(size_rx);
+				`else
                 predict_rx_watermark_intr();
+				`endif
               end
             end else if (tx_enabled && tx_processing_item_q.size == 0 && tx_q.size > 0) begin
               tx_processing_item_q.push_back(tx_q.pop_front());
@@ -217,6 +240,10 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
       "fifo_ctrl": begin
         if (write && channel == AddrChannel) begin
           // these fields are WO
+		  `ifdef _VCP //dzi382
+		  int size_tx;
+		  int size_rx;
+		  `endif
           bit txrst_val = bit'(get_field_val(ral.fifo_ctrl.txrst, item.a_data));
           bit rxrst_val = bit'(get_field_val(ral.fifo_ctrl.rxrst, item.a_data));
           if (txrst_val) begin
@@ -243,8 +270,15 @@ class uart_scoreboard extends cip_base_scoreboard #(.CFG_T(uart_env_cfg),
             end
           end
           // recalculate watermark when RXILVL/TXILVL is updated
-          predict_tx_watermark_intr();
+         `ifdef _VCP //DZI382
+		  size_tx=tx_q.size;
+		  predict_tx_watermark_intr(size_tx);
+		  size_rx=rx_q.size;
+          predict_rx_watermark_intr(size_rx);		  
+		 `else
+		  predict_tx_watermark_intr();
           predict_rx_watermark_intr();
+		  `endif
         end // write && channel == AddrChannel
       end
       "intr_test": begin

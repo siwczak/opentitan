@@ -61,7 +61,12 @@ class hmac_scoreboard extends cip_base_scoreboard #(.CFG_T (hmac_env_cfg),
           foreach (item.a_mask[i]) begin
             if (item.a_mask[i]) begin
               // The DUT by default (endian_swap bit set to 0) operates at big endian data
+		`ifdef _VCP //DZI381
+			  if(ral.cfg.endian_swap.get_mirrored_value()) msg={bytes[i], msg};
+			  else 	msg={msg, bytes[i]};
+		`else
               msg = (ral.cfg.endian_swap.get_mirrored_value()) ? {bytes[i], msg} : {msg, bytes[i]};
+		`endif
             end
           end
           foreach (msg[i]) msg_q.push_back(msg[i]);

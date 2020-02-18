@@ -106,9 +106,10 @@ module flash_phy #(
       .rready (host_req_done_o),
       .rdata  (rsp_bank_sel)
     );
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar bank = 0; bank < NumBanks; bank++) begin : gen_flash_banks
-
     // pop if the response came from the appropriate fifo
     assign host_rsp_ack[bank] = host_req_done_o & (rsp_bank_sel == bank);
 
@@ -154,5 +155,7 @@ module flash_phy #(
       .init_busy_o(init_busy[bank])
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 endmodule // flash_phy

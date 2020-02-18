@@ -29,6 +29,12 @@ module prim_ram_1p #(
   output logic [Width-1:0] rdata_o
 );
 
+`ifdef _VCP //dzi380
+mem_bkdr_if flash0_mem_bkdr_if();
+
+mem_bkdr_if flash1_mem_bkdr_if();
+`endif
+
   import prim_pkg::*;
 
   if (Impl == ImplGeneric || Impl == ImplXilinx) begin : gen_mem_generic

@@ -17,7 +17,13 @@ class cip_base_env #(type CFG_T               = cip_base_env_cfg,
   `uvm_component_new
 
   virtual function void build_phase(uvm_phase phase);
-    super.build_phase(phase);
+		`ifdef _VCP //dzi378
+		CFG_T cfg;
+		`endif
+		super.build_phase(phase);
+		`ifdef _VCP //dzi378
+		cfg=super.cfg;
+		`endif
     if (cfg.zero_delays) begin
       cfg.m_tl_agent_cfg.a_valid_delay_min = 0;
       cfg.m_tl_agent_cfg.a_valid_delay_max = 0;
@@ -47,19 +53,36 @@ class cip_base_env #(type CFG_T               = cip_base_env_cfg,
     m_tl_reg_adapter = tl_reg_adapter#()::type_id::create("m_tl_reg_adapter");
     // create alert agents and cfgs
     foreach(cfg.list_of_alerts[i]) begin
+		`ifdef _VCP //DZI378
+			alert_esc_agent_cfg temp;
+		`endif
       string alert_name = cfg.list_of_alerts[i];
       string agent_name = {"m_alert_agent_", alert_name};
+		`ifdef _VCP //dzi378
+			temp =cfg.m_alert_agent_cfg[alert_name];
+			temp = alert_esc_agent_cfg::type_id::create("m_alert_agent_cfg");
+			temp.if_mode = dv_utils_pkg::Device;
+			uvm_config_db#(alert_esc_agent_cfg)::set(this, agent_name, "cfg",
+				temp);
+		`else
       m_alert_agent[alert_name] = alert_esc_agent::type_id::create(agent_name, this);
       cfg.m_alert_agent_cfg[alert_name] = alert_esc_agent_cfg::type_id::create("m_alert_agent_cfg");
       cfg.m_alert_agent_cfg[alert_name].if_mode = dv_utils_pkg::Device;
       uvm_config_db#(alert_esc_agent_cfg)::set(this, agent_name, "cfg",
           cfg.m_alert_agent_cfg[alert_name]);
+`endif
     end
     uvm_config_db#(tl_agent_cfg)::set(this, "m_tl_agent*", "cfg", cfg.m_tl_agent_cfg);
   endfunction
 
   virtual function void connect_phase(uvm_phase phase);
-    super.connect_phase(phase);
+`ifdef _VCP //DZI378
+		CFG_T cfg;
+		`endif
+		super.connect_phase(phase);
+		`ifdef _VCP //DZI378
+		cfg=super.cfg;
+		`endif 
     if (cfg.en_scb) begin
       m_tl_agent.monitor.a_chan_port.connect(scoreboard.tl_a_chan_fifo.analysis_export);
       m_tl_agent.monitor.d_chan_port.connect(scoreboard.tl_d_chan_fifo.analysis_export);
@@ -68,7 +91,15 @@ class cip_base_env #(type CFG_T               = cip_base_env_cfg,
       virtual_sequencer.tl_sequencer_h = m_tl_agent.sequencer;
     end
     foreach(cfg.list_of_alerts[i]) begin
+			`ifdef _VCP //dzi378
+			string temp;
+			alert_esc_agent_cfg temp_2;
+			temp=cfg.list_of_alerts[i];
+			temp_2=cfg.m_alert_agent_cfg[temp];
+			if (temp_2.is_active) begin
+				`else
       if (cfg.m_alert_agent_cfg[cfg.list_of_alerts[i]].is_active) begin
+`endif
         virtual_sequencer.alert_esc_sequencer_h[cfg.list_of_alerts[i]] =
             m_alert_agent[cfg.list_of_alerts[i]].sequencer;
       end
@@ -82,4 +113,5 @@ class cip_base_env #(type CFG_T               = cip_base_env_cfg,
   endfunction : end_of_elaboration_phase
 
 endclass
+
 

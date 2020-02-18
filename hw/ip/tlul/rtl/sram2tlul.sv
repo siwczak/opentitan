@@ -31,15 +31,28 @@ module sram2tlul #(
   import tlul_pkg::*;
 
   `ifndef SYNTHESIS
+`ifdef _VCP //LPA1866
+generate
+`endif
   if (SramDw != top_pkg::TL_DW) $fatal("SRAM_DW should be same as TL-UL DW");
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   `endif
-
+`ifdef _VCP
+typedef reg signed [31:0] temporary_type;
+`endif
   localparam int unsigned SRAM_DWB = $clog2(SramDw/8);
 
   assign tl_o.a_valid   = mem_req;
   assign tl_o.a_opcode  = (mem_write) ? PutFullData : Get;
   assign tl_o.a_param   = '0;
+  `ifdef _VCP
+  assign tl_o.a_size    = temporary_type'(SRAM_DWB); // Max Size always
+  `else
   assign tl_o.a_size    = top_pkg::TL_SZW'(SRAM_DWB); // Max Size always
+  
+  `endif
   assign tl_o.a_source  = '0;
   assign tl_o.a_address = TlBaseAddr |
                           {{(top_pkg::TL_AW-SramAw-SRAM_DWB){1'b0}},mem_addr,{(SRAM_DWB){1'b0}}};

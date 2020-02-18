@@ -54,7 +54,9 @@ TOPS              ?= ${TB_TOP} ${DUT_TOP}_bind
 ####################################################################################################
 # BUILD_OPTS are passed to the simulator during the SV testbench compile step
 CL_BUILD_OPTS     +=
-BUILD_OPTS        += $(addprefix -top , $(TOPS))
+ifneq (${SIMULATOR},rivierapro)
+	BUILD_OPTS        += $(addprefix -top , $(TOPS))
+endif
 
 # RUN_OPTS are passed to the simulation executable that is invoked to run the simulation
 CL_RUN_OPTS       +=
@@ -94,6 +96,8 @@ ifeq (${SIMULATOR},vcs)
   include ${MAKE_ROOT}/vcs/vcs.mk
 else ifeq (${SIMULATOR},xcelium)
   include ${MAKE_ROOT}/xcelium/xcelium.mk
+else ifeq (${SIMULATOR},rivierapro)
+  include ${MAKE_ROOT}/rivierapro/rivierapro.mk
 # else add other tool specific mk files
 endif
 

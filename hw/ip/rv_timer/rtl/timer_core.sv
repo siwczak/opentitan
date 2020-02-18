@@ -42,8 +42,13 @@ module timer_core #(
 
   // interrupt is generated if mtime is greater than or equal to mtimecmp
   // TODO: Check if it must consider overflow case
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar t = 0 ; t < N ; t++) begin : gen_intr
     assign intr[t] = active & (mtime >= mtimecmp[t]);
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 endmodule : timer_core

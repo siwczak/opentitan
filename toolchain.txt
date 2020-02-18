@@ -5,13 +5,13 @@
 # Meson RISCV toolchain configuration.
 
 [binaries]
-c = '/tools/riscv/bin/riscv32-unknown-elf-gcc'
-cpp = '/tools/riscv/bin/riscv32-unknown-elf-g++'
-ar = '/tools/riscv/bin/riscv32-unknown-elf-ar'
-ld = '/tools/riscv/bin/riscv32-unknown-elf-ld'
-objdump = '/tools/riscv/bin/riscv32-unknown-elf-objdump'
-objcopy = '/tools/riscv/bin/riscv32-unknown-elf-objcopy'
-strip = '/tools/riscv/bin/riscv32-unknown-elf-strip'
+c = 'riscv32-unknown-elf-gcc'
+cpp = 'riscv32-unknown-elf-g++'
+ar = 'riscv32-unknown-elf-ar'
+ld = 'riscv32-unknown-elf-ld'
+objdump = 'riscv32-unknown-elf-objdump'
+objcopy = 'riscv32-unknown-elf-objcopy'
+strip = 'riscv32-unknown-elf-strip'
 
 [properties]
 has_function_printf = false

@@ -41,9 +41,14 @@ module alert_handler_class import alert_pkg::*; (
   end
 
   // mask and OR reduction, followed by class enable gating
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < N_CLASSES; k++) begin : gen_classifier
     assign class_trig_o[k] = (|{ alert_cause_o     & class_masks[k],
                                  loc_alert_cause_o & loc_class_masks[k] });
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 endmodule : alert_handler_class

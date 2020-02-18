@@ -60,13 +60,17 @@ module flash_mp #(
   logic final_prog_en;
   logic final_pg_erase_en;
   logic final_bk_erase_en;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // Lower indices always have priority
   assign region_sel[0] = region_match[0];
   for (genvar i = 1; i < TotalRegions; i++) begin: gen_region_priority
     assign region_sel[i] = region_match[i] & ~|region_match[i-1:0];
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // check for region match
   always_comb begin
     for (int unsigned i = 0; i < TotalRegions; i++) begin: region_comps

@@ -117,10 +117,14 @@ module prim_sram_arbiter #(
   );
 
   assign rsp_rvalid = steer & {N{sram_rvalid}};
-
+`ifdef _VCP   //LPA1866
+generate
+`endif
   for (genvar i = 0 ; i < N ; i++) begin : gen_rsp
     assign rsp_rdata[i] = sram_rdata;
     assign rsp_error[i] = sram_rerror; // No SECDED yet
   end
-
+`ifdef _VCP   //LPA1866
+endgenerate
+`endif
 endmodule

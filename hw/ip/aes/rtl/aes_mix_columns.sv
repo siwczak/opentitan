@@ -17,7 +17,9 @@ module aes_mix_columns (
   logic [3:0][3:0][7:0] data_o_transposed;
 
   assign data_i_transposed = aes_transpose(data_i);
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // Individually mix columns
   for (genvar i = 0; i < 4; i++) begin : gen_mix_column
     aes_mix_single_column aes_mix_column_i (
@@ -26,7 +28,9 @@ module aes_mix_columns (
       .data_o ( data_o_transposed[i] )
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   assign data_o = aes_transpose(data_o_transposed);
 
 endmodule

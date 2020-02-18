@@ -27,9 +27,16 @@ pre_compile:
 
 gen_sv_flist: pre_compile ral
 	cd ${BUILD_DIR} && ${SV_FLIST_GEN_TOOL} ${SV_FLIST_GEN_OPTS}
-
+ifeq (${SIMULATOR},rivierapro)
+	cat ${SV_FLIST} | grep "incdir\|sv" > ${SV_FLIST_GEN_DIR}/sv_files.f 
+	cat ${SV_FLIST} | grep '\.c' > ${SV_FLIST_GEN_DIR}/cpp_files.f
+endif
 compile: gen_sv_flist
-	cd ${SV_FLIST_GEN_DIR} && $(BUILD_JOB_OPTS) ${SIMCC} ${BUILD_OPTS} ${CL_BUILD_OPTS}
+ifeq (${SIMULATOR},rivierapro)
+	cd ${SV_FLIST_GEN_DIR} && ${GCC} ${GCC_LIB}
+endif
+	cd ${SV_FLIST_GEN_DIR} && ${LIBCC} ${LIB_OPTS} && $(BUILD_JOB_OPTS) ${SIMCC} ${CL_BUILD_OPTS} ${BUILD_OPTS}
+
 
 post_compile: compile
 

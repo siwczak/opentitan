@@ -68,7 +68,9 @@ module rv_timer (
   assign hw2reg.intr_state0[0].de = intr_timer_state_de;
   assign hw2reg.intr_state0[0].d  = intr_timer_state_d;
 
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar h = 0 ; h < N_HARTS ; h++) begin : gen_harts
     prim_intr_hw #(
       .Width(N_TIMERS)
@@ -104,7 +106,9 @@ module rv_timer (
       .intr      (intr_timer_set[h*N_TIMERS+:N_TIMERS])
     );
   end : gen_harts
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   // Register module
   rv_timer_reg_top u_reg (
     .clk_i,

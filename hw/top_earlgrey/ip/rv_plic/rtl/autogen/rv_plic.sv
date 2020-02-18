@@ -163,10 +163,15 @@ module rv_plic import rv_plic_reg_pkg::*; #(
   //////////////////////
   // Interrupt Enable //
   //////////////////////
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar s = 0; s < 63; s++) begin : gen_ie0
     assign ie[0][s] = reg2hw.ie0[s].q;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   ////////////////////////
   // THRESHOLD register //
   ////////////////////////
@@ -189,18 +194,28 @@ module rv_plic import rv_plic_reg_pkg::*; #(
   ////////
   // IP //
   ////////
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar s = 0; s < 63; s++) begin : gen_ip
     assign hw2reg.ip[s].de = 1'b1; // Always write
     assign hw2reg.ip[s].d  = ip[s];
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   ///////////////////////////////////
   // Detection:: 0: Level, 1: Edge //
   ///////////////////////////////////
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar s = 0; s < 63; s++) begin : gen_le
     assign le[s] = reg2hw.le[s].q;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   //////////////
   // Gateways //
   //////////////
@@ -222,6 +237,9 @@ module rv_plic import rv_plic_reg_pkg::*; #(
   ///////////////////////////////////
   // Target interrupt notification //
   ///////////////////////////////////
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar i = 0 ; i < NumTarget ; i++) begin : gen_target
     rv_plic_target #(
       .N_SOURCE (NumSrc),
@@ -241,7 +259,9 @@ module rv_plic import rv_plic_reg_pkg::*; #(
 
     );
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   ////////////////////////
   // Register interface //
   ////////////////////////
@@ -265,8 +285,13 @@ module rv_plic import rv_plic_reg_pkg::*; #(
   `ASSERT_KNOWN(TlAReadyKnownO_A, tl_o.a_ready, clk_i, !rst_ni)
   `ASSERT_KNOWN(IrqKnownO_A, irq_o, clk_i, !rst_ni)
   `ASSERT_KNOWN(MsipKnownO_A, msip_o, clk_i, !rst_ni)
+  `ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < NumTarget; k++) begin : gen_irq_id_known
     `ASSERT_KNOWN(IrqIdKnownO_A, irq_id_o[k], clk_i, !rst_ni)
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 endmodule

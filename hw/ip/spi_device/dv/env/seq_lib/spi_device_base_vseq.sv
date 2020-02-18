@@ -164,7 +164,11 @@ class spi_device_base_vseq extends cip_base_vseq #(
   endtask
 
   // write spi device data to send when incoming host traffic arrives
+  `ifdef _VCP //their mistake IMO
+  virtual task write_device_words_to_send(bit [31:0] device_data[$]);
+  `else
   virtual task write_device_words_to_send(logic [31:0] device_data[$]);
+  `endif
     bit [TL_DW-1:0] tx_wptr;
     uint tx_sram_size_bytes = `get_tx_allocated_sram_size_bytes;
 

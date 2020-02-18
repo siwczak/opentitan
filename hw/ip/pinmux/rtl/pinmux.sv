@@ -39,7 +39,9 @@ module pinmux (
   ///////////////
   // Input Mux //
   ///////////////
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < pinmux_reg_pkg::NPeriphIn; k++) begin : gen_periph_in
     logic [pinmux_reg_pkg::NMioPads+2-1:0] data_mux;
     // stack input and default signals for convenient indexing below
@@ -50,11 +52,15 @@ module pinmux (
     // disallow undefined entries
     `ASSUME(InSelRange_A, reg2hw.periph_insel[k].q < pinmux_reg_pkg::NMioPads + 2, clk_i, !rst_ni)
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   ////////////////
   // Output Mux //
   ////////////////
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < pinmux_reg_pkg::NMioPads; k++) begin : gen_mio_out
     logic [pinmux_reg_pkg::NPeriphOut+3-1:0] data_mux, oe_mux;
     // stack output data/enable and default signals for convenient indexing below
@@ -67,7 +73,9 @@ module pinmux (
     // disallow undefined entries
     `ASSUME(OutSelRange_A, reg2hw.mio_outsel[k].q < pinmux_reg_pkg::NPeriphOut + 3, clk_i, !rst_ni)
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   ////////////////
   // Assertions //
   ////////////////

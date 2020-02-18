@@ -82,11 +82,15 @@ module alert_handler_ping_timer import alert_pkg::*; #(
     .entropy_i,
     .state_o    ( lfsr_state )
   );
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar k = 0; k < 32; k++) begin : gen_perm
     assign perm_state[k] = lfsr_state[perm[k]];
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   logic [IdDw-1:0] id_to_ping;
   logic [PING_CNT_DW-1:0] wait_cyc;
   // we only use bits up to 23, as IdDw is 8bit maximum

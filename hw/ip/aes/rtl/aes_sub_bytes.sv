@@ -11,7 +11,9 @@ module aes_sub_bytes #(
   input  logic [3:0][3:0][7:0] data_i,
   output logic [3:0][3:0][7:0] data_o
 );
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // Individually substitute bytes
   for (genvar j = 0; j < 4; j++) begin : gen_sbox_j
     for (genvar i = 0; i < 4; i++) begin : gen_sbox_i
@@ -24,5 +26,7 @@ module aes_sub_bytes #(
       );
     end
   end
-
+`ifdef _VCP // LPA1866
+endgenerate
+`endif
 endmodule

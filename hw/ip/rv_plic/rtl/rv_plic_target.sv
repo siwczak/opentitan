@@ -42,7 +42,9 @@ module rv_plic_target #(
   logic [2**(N_LEVELS+1)-2:0]            is_tree;
   logic [2**(N_LEVELS+1)-2:0][SRCW-1:0]  id_tree;
   logic [2**(N_LEVELS+1)-2:0][PRIOW-1:0] max_tree;
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar level = 0; level < N_LEVELS+1; level++) begin : gen_tree
     //
     // level+1   c0   c1   <- "base1" points to the first node on "level+1",
@@ -102,7 +104,9 @@ module rv_plic_target #(
       end
     end : gen_level
   end : gen_tree
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   logic irq_d, irq_q;
   logic [SRCW-1:0] irq_id_d, irq_id_q;
 

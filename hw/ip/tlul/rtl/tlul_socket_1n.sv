@@ -123,7 +123,9 @@ module tlul_socket_1n #(
 
   tlul_pkg::tl_h2d_t   tl_u_o [N+1];
   tlul_pkg::tl_d2h_t   tl_u_i [N+1];
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   for (genvar i = 0 ; i < N ; i++) begin : gen_u_o
     assign tl_u_o[i].a_valid   = tl_t_o.a_valid &
                                  (dev_select_t == NWD'(i)) &
@@ -137,7 +139,9 @@ module tlul_socket_1n #(
     assign tl_u_o[i].a_data    = tl_t_o.a_data;
     assign tl_u_o[i].a_user    = tl_t_o.a_user;
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   tlul_pkg::tl_d2h_t tl_t_p ;
 
   // for the returning reqready, only look at the slave we're addressing
@@ -170,12 +174,20 @@ module tlul_socket_1n #(
   assign tl_t_i.d_user   = tl_t_p.d_user  ;
   assign tl_t_i.d_error  = tl_t_p.d_error ;
 
-
+`ifdef _VCP //LPA1866
+generate
+`endif
   // accept responses from devices when selected if upstream is accepting
   for (genvar i = 0 ; i < N+1 ; i++) begin : gen_u_o_d_ready
     assign tl_u_o[i].d_ready = tl_t_o.d_ready;
   end
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
 
+`ifdef _VCP //LPA1866
+generate
+`endif
   // finally instantiate all device FIFOs and the error responder
   for (genvar i = 0 ; i < N ; i++) begin : gen_dfifo
     tlul_fifo_sync #(
@@ -195,7 +207,9 @@ module tlul_socket_1n #(
       .spare_rsp_i (1'b0),
       .spare_rsp_o ());
   end
-
+`ifdef _VCP //LPA1866
+endgenerate
+`endif
   assign tl_u_o[N].a_valid     = tl_t_o.a_valid &
                                  (dev_select_t == NWD'(N)) &
                                  ~hold_all_requests;
